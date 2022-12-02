@@ -4,85 +4,60 @@ using UnityEngine;
 
 public class CharacterScript : MonoBehaviour
 {
-    private CharacterController characterController;
-    public Animator anim;
-    [SerializeField] private float moveSpeed;
-    [SerializedField] private float walkSpeed;
-    [SerializedField] private float runSpeed;
+    Animator anim;
+    Vector2 input;
 
-    private  Vector3 moveDirection;
+    public CharacterController controller;
+    private float speed = 2.0f;
+    public float gravity = -9.81f;
+    public float jump = 3f;
+
+    public Transform groundCheck;
+    public float groundDistance = 0.4f;
+    public LayerMask groundMask;
+    
+    Vector3 playerVelocity;
+    bool isGrounded;
+    
     void Start()
     {
-        characterController = GetComponent<CharacterController>();
+        controller = GetComponent<CharacterController>();
         anim = GetComponent<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //2 or more input
-        if(Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftShift) && Input.GetKey(KeyCode.Space)){
-            anim.SetInteger("BasicMovement", 6);
+        AnimationMove();
+
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        if(isGrounded && playerVelocity.y < 0){
+            playerVelocity.y = -2f;
+
         }
-        if(Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftShift)){
-            anim.SetInteger("BasicMovement", 2);
+
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
+
+        if(Input.GetButtonDown("Jump") && isGrounded){
+            playerVelocity.y=Mathf.Sqrt(jump * -2f * gravity);
+            anim.SetBool("Jump", true);
         }
-        else if(Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftControl)){
-            anim.SetInteger("BasicMovement", 5);
+        else if(Input.GetButtonUp("Jump") && !isGrounded){
+            anim.SetBool("Jump", false);
         }
-        else if(Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.Space)){
-            anim.SetInteger("BasicMovement", 6);
-        }
-        else if(Input.GetKey(KeyCode.LeftControl) && Input.GetKey(KeyCode.Space)){
-            anim.SetInteger("BasicMovement", 7);
-        }
-        //Basic
-        else if(Input.GetKey(KeyCode.LeftControl)){
-            anim.SetInteger("BasicMovement", 4);
-        }
-        else if(Input.GetKey(KeyCode.W)){
-            anim.SetInteger("BasicMovement", 1);
-        }
-        else if(Input.GetKey(KeyCode.A)){
-            anim.SetInteger("BasicMovement", 1);
-        }
-        else if(Input.GetKey(KeyCode.S)){
-            anim.SetInteger("BasicMovement", 3);
-        }
-        else if(Input.GetKey(KeyCode.D)){
-            anim.SetInteger("BasicMovement", 1);
-        }
-        else if(Input.GetKeyDown(KeyCode.Space)){
-            //anim.SetInteger("BasicMovement", 7);
-            Debug.Log("Press Space");
-            velocity.y = Mathf.Sqrt(jumpheight * -2f * gravity);
-        }
-        else{
-            anim.SetInteger("BasicMovement", 0);
-        }   
+        Vector3 move = transform.right * x + transform.forward * z;
+        controller.Move(move * speed * Time.deltaTime);
+        playerVelocity.y += gravity*Time.deltaTime;
+        controller.Move(playerVelocity*Time.deltaTime);
     }
-    private void Move() {
-        float moveZ = Input.GetAxis("Vertical");
-        moveDirection = new Vector3(0,0,moveZ);
-        moveDirection += walkSpeed;
-        if(moveDirection != Vector3.zero && !Input.GetKey(KeyCode.LeftShift)){
-            Walk();
-        }
-        else if(moveDirection != Vector3.zero && Input.GetKey(KeyCode.LeftShift)){
-            Run();
-        }
-        else if(moveDirection==Vector3.zero){
-            Idle();
-        }
-        characterController.Move(moveDirection*Time.deltaTime);
+    void AnimationMove(){
+        input.x = Input.GetAxis("Horizontal");
+        input.y = Input.GetAxis("Vertical");
+
+        anim.SetFloat("MoveX", input.x);
+        anim.SetFloat("MoveY", input.y);
     }
-    private void Idle(){
-        
-    }
-    private void Walk(){
-        moveSpeed = walkSpeed;
-    }
-    private void Run(){
-        moveSpeed = runSpeed;
-    }
+
+
 }
