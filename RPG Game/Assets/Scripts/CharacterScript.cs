@@ -41,10 +41,12 @@ public class CharacterScript : MonoBehaviour
 
         if(Input.GetButtonDown("Jump") && isGrounded){
             playerVelocity.y=Mathf.Sqrt(jump * -2f * gravity);
-            anim.SetBool("Jump", true);
         }
-        else if(Input.GetButtonUp("Jump") && !isGrounded){
+        if(isGrounded){
             anim.SetBool("Jump", false);
+        }
+        else{
+            anim.SetBool("Jump", true);
         }
         Vector3 move = transform.right * x + transform.forward * z;
         controller.Move(move * speed * Time.deltaTime);
